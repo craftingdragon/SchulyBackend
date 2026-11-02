@@ -7,8 +7,8 @@ interface Pending {
 
 export const externalErrors: Record<string, string> = {
   access_denied: 'You cancelled the sign-in.',
-  account_not_found: 'No Schuly account uses that sign-in yet. Create an account first, then link it in Settings.',
-  account_exists: 'An account with that email already exists. Sign in with your password, then link this provider in Settings.',
+  account_not_found: 'No Schuly account is linked to this provider identity. Contact your administrator to request access.',
+  account_exists: 'This provider identity matches an existing Schuly account. Contact your administrator to link it.',
   linked_to_another_account: 'That sign-in already belongs to another Schuly account.',
   provider_already_linked: 'That provider is already linked to your account.',
   external_login_failed: 'Signing in with that provider did not work. Try again.',
