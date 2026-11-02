@@ -12,5 +12,5 @@
 export interface AppDto { 
     version: string;
     registrationEnabled: boolean;
+    ssoOnly: boolean;
 }
-

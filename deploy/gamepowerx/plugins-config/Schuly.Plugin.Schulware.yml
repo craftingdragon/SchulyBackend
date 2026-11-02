@@ -1,0 +1,9 @@
+SchulwareApi:
+  BaseUrl: https://schulwareapi.gamepowerx.com
+
+Sync:
+  IntervalMinutes: 30
+
+Schedules:
+  Schulware Data Sync:
+    RunOnStartup: true

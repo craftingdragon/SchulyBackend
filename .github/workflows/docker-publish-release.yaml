@@ -14,6 +14,7 @@ env:
 jobs:
   sync-version:
     name: Sync application.properties with release tag
+    if: github.repository == 'schulydev/SchulyServer'
     runs-on: ubuntu-latest
     permissions:
       contents: write

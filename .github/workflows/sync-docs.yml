@@ -17,6 +17,7 @@ env:
 jobs:
   sync:
     name: Sync docs/ into SchulyDocs
+    if: github.repository == 'schulydev/SchulyServer'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source repo

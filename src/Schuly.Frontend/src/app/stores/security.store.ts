@@ -3,6 +3,7 @@ import { patchState, signalStore, withHooks, withMethods, withState } from '@ngr
 import { firstValueFrom } from 'rxjs';
 import { toDataURL } from 'qrcode';
 import { AuthApi, LinkedSignIn, SignInProof, SignInProvider, TrustedDevice, TwoFactorStatus } from '../core/auth-api';
+import { AppConfig } from '../core/app-config';
 import { externalErrors, newLinkState, returnUrl, takePending } from '../core/external-sign-in';
 import { AuthStore } from './auth.store';
 import { authErrorMessage } from './auth.store';
@@ -33,7 +34,7 @@ export const SecurityStore = signalStore(
     notice: null,
     signInAgain: null,
   }),
-  withMethods((store, api = inject(AuthApi), auth = inject(AuthStore)) => {
+  withMethods((store, api = inject(AuthApi), auth = inject(AuthStore), appConfig = inject(AppConfig)) => {
     const run = async (action: () => Promise<void>, fallback: string) => {
       patchState(store, { busy: true, error: null, notice: null });
       try {
@@ -45,6 +46,14 @@ export const SecurityStore = signalStore(
       }
     };
     const load = async () => {
+      await appConfig.load();
+      if (appConfig.ssoOnly()) {
+        const providers = await firstValueFrom(api.providers()).catch(() => []);
+        const linked = providers.length ? await firstValueFrom(api.linkedSignIns()).catch(() => []) : [];
+        patchState(store, { twoFactor: null, devices: [], providers, linked });
+        return;
+      }
+
       const [twoFactor, devices, providers] = await Promise.all([
         firstValueFrom(api.twoFactorStatus()),
         firstValueFrom(api.trustedDevices()),

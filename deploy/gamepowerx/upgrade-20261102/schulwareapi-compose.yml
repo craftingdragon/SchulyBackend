@@ -1,0 +1,13 @@
+services:
+  schulware-api:
+    image: pianonic/schulwareapi:1.11.0@sha256:57960fad6b7ca9bc70f0616523d95ae2acc8f8596289f58b48450959cd979df7
+    container_name: schulwareapi-schulware-api-1
+    ports:
+      - "8000:8000"
+    env_file:
+      - /root/SchulwareAPI/.env
+    environment:
+      PYTHONUNBUFFERED: "1"
+    restart: unless-stopped
+    init: true
+    ipc: host

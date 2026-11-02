@@ -1,0 +1,5 @@
+plugins:
+  - name: Schuly.Plugin.Schulware
+    version: 3.6.0
+  - name: Schuly.Plugin.OdaOrg
+    version: 1.10.0

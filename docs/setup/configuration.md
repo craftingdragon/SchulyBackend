@@ -54,6 +54,7 @@ get the tokens in the JSON body.
 | `LocalLogin:Issuer` / `LocalLogin:Audience` | Token issuer and audience. `appsettings.json` sets both to `schuly`. |
 | `LocalLogin:AllowSelfRegistration` | Whether anyone can register (`true` in `appsettings.json`). |
 | `LocalLogin:RequireVerifiedEmailForPasswordReset` | Only send reset mails to verified addresses (`true` in `appsettings.json`). |
+| `SsoOnly` | Set `true` to allow only provider discovery, external sign-in, token refresh, and logout in the `/auth` namespace. Every other `/auth` route is rejected, including routes added later. The separate `/api/auth` school-account endpoint is unaffected. |
 | `TwoFactor:Issuer` | Name shown in authenticator apps (`Schuly`). |
 
 Generate both keys with `openssl rand -base64 32` and keep them stable. A new signing
@@ -67,10 +68,13 @@ token for an unknown user, the API creates the matching Schuly user (`AddUserSyn
 ### Single sign-on (OIDC providers)
 
 Single sign-on is optional. Configure zero, one or several OIDC providers (Google,
-Microsoft, Authentik, Pocket ID, Keycloak, any issuer with a discovery document). With
-none configured, the web app and the mobile app show only the password form. Each
-provider shows up as a "Continue with ..." button, and signed-in users link or unlink
-providers under Settings → Security in the web app.
+Microsoft, Authentik, Pocket ID, Keycloak, any issuer with a discovery document). Each
+provider shows up as a "Continue with ..." button. Set `SsoOnly=true` for deployments
+that require the external provider for every sign-in; the API allows only provider
+discovery, external sign-in, refresh, and logout under `/auth`, rejecting other current
+or future local account routes even when called directly. The separate `/api/auth` school
+provider endpoint remains available. The bundled web sign-in page presents configured SSO
+providers only.
 
 | Key | Purpose |
 |---|---|

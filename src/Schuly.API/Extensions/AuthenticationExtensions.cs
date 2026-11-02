@@ -17,10 +17,33 @@ namespace Schuly.API.Extensions
             services.AddToamaisutaaBearer(configuration).AddUserSync();
             services.AddToamaisutaaEntityFrameworkStores<SchulyDbContext>();
 
-            services.AddToamaisutaaSmtpEmail(configuration);
-            services.AddSingleton<IEmailVerificationEmailTemplate, SchulyEmailVerificationEmailTemplate>();
-            services.AddToamaisutaaSmtpEmailVerification();
+            if (configuration.GetValue<bool>("SsoOnly"))
+            {
+                // The package's refresh/logout token endpoints live in its password endpoint
+                // group. Local password/reset routes are blocked by SsoOnlyAuthMiddleware, so
+                // satisfy the package registration check without configuring an unused mailer.
+                services.AddSingleton<IPasswordResetNotifier, DisabledPasswordResetNotifier>();
+            }
+            else
+            {
+                services.AddToamaisutaaSmtpEmail(configuration);
+                services.AddSingleton<IEmailVerificationEmailTemplate, SchulyEmailVerificationEmailTemplate>();
+                services.AddToamaisutaaSmtpEmailVerification();
+            }
             services.AddToamaisutaaPasswordLogin(configuration);
+            if (configuration.GetValue<bool>("SsoOnly"))
+            {
+                // Local credential routes are blocked by SsoOnlyAuthMiddleware. Disable
+                // local registration and email verification requirements so the package's
+                // password-login startup validator does not require SMTP services that this
+                // deployment intentionally omits. External OIDC account creation remains enabled.
+                services.PostConfigure<ToamaisutaaLocalLoginOptions>(options =>
+                {
+                    options.AllowSelfRegistration = false;
+                    options.RequireVerifiedEmailForPasswordReset = false;
+                    options.RequireVerifiedEmailForSignIn = false;
+                });
+            }
             services.AddToamaisutaaTwoFactor(configuration);
             services.AddToamaisutaaTrustedDevices(configuration);
             services.AddToamaisutaaExternalLogin(configuration);

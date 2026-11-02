@@ -1,0 +1,19 @@
+{
+  "upstreamServer": "7dd742f",
+  "serverVersion": "3.18.0",
+  "appVersion": "3.1.0",
+  "appCommit": "8d6a5b1ada81dbbf139ab3fe9c4f90f140173309",
+  "providerRegistryCommit": "751b943ae94ba9c2c89c5878d66993f1caf31d6b",
+  "schulware": "3.6.0",
+  "odaorg": "1.10.0",
+  "schulwareApi": "1.11.0",
+  "schulwareApiDigest": "sha256:57960fad6b7ca9bc70f0616523d95ae2acc8f8596289f58b48450959cd979df7",
+  "stagingVerified": {
+    "serverTests": 467,
+    "migratedIdentityCount": 1,
+    "providerSyncs": "Both Success",
+    "grades": 52,
+    "agenda": 158,
+    "studentDocuments": 4
+  }
+}

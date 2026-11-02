@@ -8,6 +8,7 @@ import { HlmCardImports } from '@spartan-ng/helm/card';
 import { HlmFieldImports } from '@spartan-ng/helm/field';
 import { HlmInput } from '@spartan-ng/helm/input';
 import { HlmSeparator } from '@spartan-ng/helm/separator';
+import { AppConfig } from '../../core/app-config';
 import { SecurityStore } from '../../stores/security.store';
 import { AppDatePipe } from '../../core/date-format';
 
@@ -29,7 +30,7 @@ import { AppDatePipe } from '../../core/date-format';
     <section hlmCard>
       <div hlmCardHeader>
         <h3 hlmCardTitle>Security</h3>
-        <p hlmCardDescription>Your password, two-factor authentication, sign-in providers and remembered devices.</p>
+        <p hlmCardDescription>Your sign-in provider and security options.</p>
       </div>
       <div hlmCardContent class="flex flex-col gap-6">
         @if (security.signInAgain() && !security.recoveryCodes()) {
@@ -54,6 +55,29 @@ import { AppDatePipe } from '../../core/date-format';
           </div>
         }
 
+        @if (appConfig.ssoOnly()) {
+          <div class="flex flex-col gap-3">
+            <span class="text-sm font-medium">Single sign-on</span>
+            <p class="text-muted-foreground text-sm">
+              Sign-in is managed by your school identity provider. Passwords, two-factor settings,
+              and remembered devices are managed there.
+            </p>
+            @if (providerRows().length) {
+              <ul class="divide-y rounded-lg border">
+                @for (provider of providerRows(); track provider.key) {
+                  <li class="flex items-center justify-between gap-2 px-3 py-2 text-sm">
+                    <span>{{ provider.name }}</span>
+                    <span hlmBadge [variant]="provider.linked ? 'outline' : 'secondary'">
+                      {{ provider.linked ? 'Connected' : 'Not connected' }}
+                    </span>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="text-muted-foreground text-sm">No identity provider is currently configured.</p>
+            }
+          </div>
+        } @else {
         <form class="flex flex-col gap-3" [formRoot]="passwordForm">
           <span class="text-sm font-medium">Change password</span>
           <div class="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
@@ -300,12 +324,14 @@ import { AppDatePipe } from '../../core/date-format';
             </button>
           </div>
         }
+        }
       </div>
     </section>
   `,
 })
 export class SecurityCard {
   protected readonly security = inject(SecurityStore);
+  protected readonly appConfig = inject(AppConfig);
   protected readonly proofValue = signal('');
   protected readonly providerRows = computed(() => {
     const linked = this.security.linked();

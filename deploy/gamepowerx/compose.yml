@@ -1,0 +1,85 @@
+services:
+  postgres:
+    image: postgres:18.1
+    container_name: schuly-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: schuly
+      POSTGRES_USER: schuly
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql
+    networks:
+      - schuly-internal
+
+  seaweedfs:
+    image: chrislusf/seaweedfs@sha256:6620371e8af8282056685c652d4637265698c9e2c2d59f9594e6ac333ad6c634
+    container_name: schuly-seaweedfs
+    restart: unless-stopped
+    command: >
+      server -dir=/data
+      -s3 -s3.config=/etc/seaweedfs/s3-config.json
+      -s3.port=8333
+      -master.volumeSizeLimitMB=1024
+    volumes:
+      - ./data/seaweedfs:/data
+      - ./seaweedfs/s3-config.json:/etc/seaweedfs/s3-config.json:ro
+    networks:
+      - schuly-internal
+
+  backend:
+    image: mcr.microsoft.com/dotnet/aspnet:10.0@sha256:de0ee358cdd672f7017a003bed21e9ac9ed48a27c922a59b18175b6e82fa7fee
+    container_name: schuly-backend
+    restart: unless-stopped
+    working_dir: /app
+    command: ["dotnet", "Schuly.API.dll"]
+    depends_on:
+      - postgres
+      - seaweedfs
+    ports:
+      - "127.0.0.1:5033:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://0.0.0.0:8080
+      ForwardedHeaders__KnownNetworks__0: 172.21.0.0/16
+      ConnectionStrings__SchulyDatabase: Host=postgres;Port=5432;Database=schuly;Username=schuly;Password=${POSTGRES_PASSWORD}
+      SsoOnly: "true"
+      LocalLogin__AllowSelfRegistration: "false"
+      LocalLogin__SigningKey: ${LOCAL_LOGIN_SIGNING_KEY}
+      TwoFactor__EncryptionKey: ${TWO_FACTOR_ENCRYPTION_KEY}
+      ExternalLogin__Providers__gamepowerx__DisplayName: GamepowerX
+      ExternalLogin__Providers__gamepowerx__Authority: https://auth.gamepowerx.com
+      ExternalLogin__Providers__gamepowerx__ClientId: schuly-mobile
+      ExternalLogin__Providers__gamepowerx__Scopes: openid profile email groups picture
+      ExternalLogin__Providers__gamepowerx__AllowSignUp: "true"
+      ExternalLogin__Providers__gamepowerx__LinkByVerifiedEmail: "false"
+      ExternalLogin__Providers__gamepowerx__TrustEmailVerified: "false"
+      ExternalLogin__CallbackBaseUrl: https://schuly.gamepowerx.com
+      ExternalLogin__AllowedReturnUrls__0: schuly://auth/callback
+      ExternalLogin__AllowedReturnUrls__1: https://schuly.gamepowerx.com/login
+      ExternalLogin__AllowedReturnUrls__2: https://schuly.gamepowerx.com/settings
+      Mcp__PublicUrl: https://schuly.gamepowerx.com
+      S3__Endpoint: http://seaweedfs:8333
+      S3__Bucket: schuly-documents
+      S3__AccessKey: ${S3_ACCESS_KEY}
+      S3__SecretKey: ${S3_SECRET_KEY}
+      S3__UsePathStyle: "true"
+      Vault__MasterKey: ${VAULT_MASTER_KEY}
+      Documents__EncryptionKey: ${DOCUMENTS_ENCRYPTION_KEY}
+      Avatar__SigningKey: ${AVATAR_SIGNING_KEY}
+      Plugins__Directory: /app/plugins
+      Plugins__ConfigDirectory: /app/plugins-config
+      Plugins__File: /app/plugins.yml
+      Plugins__Registry: https://raw.githubusercontent.com/craftingdragon/SchulyPlugins/751b943ae94ba9c2c89c5878d66993f1caf31d6b/
+      Schulware__DefaultApiBaseUrl: https://schulwareapi.gamepowerx.com
+    volumes:
+      - ./app-v3.18.0:/app:ro
+      - ./plugins-v3:/app/plugins
+      - ./plugins-config:/app/plugins-config:ro
+      - ./plugins-v3.yml:/app/plugins.yml
+    networks:
+      - schuly-internal
+
+networks:
+  schuly-internal:
+    name: schuly-internal

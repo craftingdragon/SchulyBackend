@@ -10,6 +10,7 @@ import { HlmCardImports } from '@spartan-ng/helm/card';
 import { HlmFieldImports } from '@spartan-ng/helm/field';
 import { HlmInput } from '@spartan-ng/helm/input';
 import { HlmSpinner } from '@spartan-ng/helm/spinner';
+import { AppConfig } from '../../core/app-config';
 import { SecurityStore } from '../../stores/security.store';
 import { UserStore } from '../../stores/user.store';
 
@@ -98,6 +99,10 @@ import { UserStore } from '../../stores/user.store';
           </div>
           @if (user.email()) {
             <p class="text-muted-foreground text-sm">{{ user.email() }}</p>
+          } @else if (appConfig.ssoOnly()) {
+            <p class="text-muted-foreground text-sm">
+              Sign-in details are managed by your school identity provider.
+            </p>
           } @else {
             <p class="text-muted-foreground text-sm">
               Confirm your email so you can reset your password if you forget it.
@@ -145,6 +150,7 @@ import { UserStore } from '../../stores/user.store';
 export class AccountCard {
   protected readonly user = inject(UserStore);
   protected readonly security = inject(SecurityStore);
+  protected readonly appConfig = inject(AppConfig);
   protected readonly picError = signal<string | null>(null);
   private readonly verificationModel = signal({ email: '', password: '' });
   protected readonly verification = form(
@@ -156,6 +162,10 @@ export class AccountCard {
     },
     { submission: { action: () => this.resend() } },
   );
+
+  constructor() {
+    void this.appConfig.load();
+  }
 
   protected upload(input: HTMLInputElement): void {
     const file = input.files?.[0];

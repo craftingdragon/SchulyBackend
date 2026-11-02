@@ -1,0 +1,99 @@
+server:
+  address: tcp://0.0.0.0:9091/
+
+log:
+  level: info
+
+theme: auto
+
+totp:
+  issuer: auth.gamepowerx.com
+
+identity_validation:
+  reset_password:
+    jwt_secret: '{{ secret "/secrets/JWT_SECRET" }}'
+
+authentication_backend:
+  file:
+    path: /config/users_database.yml
+    watch: true
+    password:
+      algorithm: argon2
+      argon2:
+        variant: argon2id
+        iterations: 3
+        memory: 65536
+        parallelism: 4
+        key_length: 32
+        salt_length: 16
+
+access_control:
+  default_policy: one_factor
+
+session:
+  secret: '{{ secret "/secrets/SESSION_SECRET" }}'
+  name: authelia_session
+  same_site: lax
+  expiration: 12h
+  inactivity: 2h
+  remember_me: 1M
+  cookies:
+    - domain: gamepowerx.com
+      authelia_url: https://auth.gamepowerx.com
+      default_redirection_url: https://gamepowerx.com
+  redis:
+    host: redis
+    port: 6379
+
+regulation:
+  max_retries: 5
+  find_time: 2m
+  ban_time: 10m
+
+storage:
+  encryption_key: '{{ secret "/secrets/STORAGE_ENCRYPTION_KEY" }}'
+  postgres:
+    address: tcp://postgres:5432
+    database: authelia
+    schema: public
+    username: authelia
+    password: '{{ secret "/secrets/STORAGE_PASSWORD" }}'
+
+identity_providers:
+  oidc:
+    hmac_secret: '{{ secret "/secrets/OIDC_HMAC_SECRET" }}'
+    jwks:
+      - key: |
+          {{- fileContent "/secrets/OIDC_JWKS_PRIVATE_KEY.pem" | nindent 10 }}
+    clients:
+      - client_id: schuly-mobile
+        client_name: Schuly Mobile
+        public: true
+        authorization_policy: one_factor
+        redirect_uris:
+          - schulytest://callback
+          - https://schuly.gamepowerx.com/auth/external/gamepowerx/callback
+        scopes:
+          - openid
+          - profile
+          - email
+          - groups
+          - picture
+          - offline_access
+        response_types:
+          - code
+        grant_types:
+          - authorization_code
+          - refresh_token
+        token_endpoint_auth_method: none
+        pkce_challenge_method: S256
+        access_token_signed_response_alg: RS256
+
+notifier:
+  smtp:
+    address: submission://mail.gamepowerx.com:587
+    timeout: 5s
+    username: no-reply@gamepowerx.com
+    password: '{{ secret "/secrets/SMTP_PASSWORD" }}'
+    sender: Authelia <no-reply@gamepowerx.com>
+    subject: "[Authelia] {title}"

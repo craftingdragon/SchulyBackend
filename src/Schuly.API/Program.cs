@@ -72,6 +72,7 @@ app.UseExceptionHandler();
 app.UseSchulyResponseCompression();
 app.UseDefaultFiles();
 app.UseStaticFiles(StaticAssetCaching.Options);
+app.UseMiddleware<SsoOnlyAuthMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
